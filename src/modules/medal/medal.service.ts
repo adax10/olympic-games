@@ -1,6 +1,6 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DeleteResult, Repository, UpdateResult } from 'typeorm';
+import { DeleteResult, Repository, UpdateResult, Like } from 'typeorm';
 import { Medal } from './entities/medal.entity';
 
 @Injectable()
@@ -22,8 +22,29 @@ export class MedalService {
     return this.medalRepository.save(row);
   }
 
-  async getRows(): Promise<Medal[]> {
-    return this.medalRepository.find();
+  async getRows(
+    offset: number,
+    limit: number,
+    order?: 'DESC' | 'ASC',
+    search?: string
+  ): Promise<Medal[]> {
+    const query = {
+      order: {
+        amount: order
+      },
+      skip: offset,
+      take: limit,
+      where: {}
+    };
+
+    if (search)
+      query.where = {
+        country: Like(`%${search}%`)
+      };
+
+    return this.medalRepository.find(query).catch((err) => {
+      throw new HttpException(`${err}`, HttpStatus.BAD_REQUEST);
+    });
   }
 
   async getById(id: string): Promise<Medal> {

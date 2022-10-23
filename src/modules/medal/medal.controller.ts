@@ -1,8 +1,9 @@
-import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
+import { ApiBearerAuth, ApiBody, ApiTags, ApiQuery } from '@nestjs/swagger';
 import { UpdateResult, DeleteResult } from 'typeorm';
 import { Medal } from './entities/medal.entity';
 import { MedalService } from './medal.service';
+import { PaginationParams } from '@/utils/types/pagination-params';
 
 @Controller('medal')
 @ApiTags('Medal')
@@ -18,9 +19,33 @@ export class MedalController {
     return await this.medalService.create(medal);
   }
 
+  @ApiQuery({
+    name: 'offset',
+    type: Number,
+    required: true
+  })
+  @ApiQuery({
+    name: 'limit',
+    type: Number,
+    required: true
+  })
+  @ApiQuery({
+    name: 'order',
+    enum: ['DESC', 'ASC'],
+    required: false
+  })
+  @ApiQuery({
+    name: 'search',
+    type: String,
+    required: false
+  })
   @Get()
-  async getRows(): Promise<Medal[]> {
-    return await this.medalService.getRows();
+  async getRows(
+    @Query() { offset, limit }: PaginationParams,
+    @Query('order') order: 'DESC' | 'ASC',
+    @Query('search') search: string
+  ): Promise<Medal[]> {
+    return await this.medalService.getRows(offset, limit, order, search);
   }
 
   @Get(':id')
